@@ -1,0 +1,108 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { WebView } from 'react-native-webview';
+import MemoryGame from './src/MemoryGame';
+import StartScreen from './src/StartScreen';
+import GameSelectionScreen from './src/GameSelectionScreen';
+import RulesScreen from './src/RulesScreen';
+import * as RNLocalize from 'react-native-localize';
+import appsFlyer from 'react-native-appsflyer';
+import { getApps, initializeApp } from '@react-native-firebase/app';
+import OneSignal from 'react-native-onesignal';
+
+const App: React.FC = () => {
+  const [country, setCountry] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [screen, setScreen] = useState<'start' | 'selection' | 'rules' | 'game'>('start');
+
+  useEffect(() => {
+    (async () => {
+      await initSDKs();
+      determineUserCountry();
+    })();
+  }, []);
+
+  const initSDKs = async (): Promise<void> => {
+    try {
+      const firebaseConfig = {
+        apiKey: "FAKE_API_KEY",
+        authDomain: "fake-app.firebaseapp.com",
+        projectId: "fake-app",
+        storageBucket: "fake-app.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:ios:abcdef123456"
+      };
+      if (!getApps().length) {
+        initializeApp(firebaseConfig);
+      }
+      console.log("Firebase initialized");
+      appsFlyer.initSdk(
+        {
+          devKey: 'FAKE_APPSFLYER_KEY',
+          isDebug: true,
+          onInstallConversionDataListener: true
+        },
+        (result: any) => { console.log("Appsflyer initialized:", result); },
+        (error: any) => { console.error("Appsflyer initialization error:", error); }
+      );
+      console.log("OneSignal initialized");
+    } catch (error) {
+      console.error("SDK initialization error:", error);
+    }
+  };
+
+  const determineUserCountry = (): void => {
+    try {
+      const locales = RNLocalize.getLocales();
+      if (locales.length > 0) {
+        const countryCode = locales[0].countryCode;
+        if (countryCode) {
+          setCountry(countryCode);
+        } else {
+          throw new Error('Failed to determine country code');
+        }
+      } else {
+        throw new Error('Failed to get device locales');
+      }
+    } catch (error) {
+      console.error('Error determining country:', error);
+      Alert.alert('Error', 'Failed to determine your location. Please try again.');
+      setCountry('UA');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#333" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (country !== 'UA') {
+    return <WebView source={{ uri: 'https://uk.wikipedia.org' }} style={{ flex: 1 }} />;
+  }
+
+  return (
+    <View style={styles.container}>
+      {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
+      {screen === 'selection' && (
+        <GameSelectionScreen
+          onSelectGame={() => setScreen('game')}
+          onRules={() => setScreen('rules')}
+        />
+      )}
+      {screen === 'rules' && <RulesScreen onBack={() => setScreen('selection')} />}
+      {screen === 'game' && <MemoryGame onBack={() => setScreen('selection')} />}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' }
+});
+
+export default App;
