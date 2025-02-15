@@ -9,11 +9,13 @@ import * as RNLocalize from 'react-native-localize';
 import appsFlyer from 'react-native-appsflyer';
 import { getApps, initializeApp } from '@react-native-firebase/app';
 import OneSignal from 'react-native-onesignal';
+import { gameConfigs } from './src/gameConfigs';
 
 const App: React.FC = () => {
   const [country, setCountry] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [screen, setScreen] = useState<'start' | 'selection' | 'rules' | 'game'>('start');
+  const [selectedGameIndex, setSelectedGameIndex] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -91,12 +93,20 @@ const App: React.FC = () => {
       {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
       {screen === 'selection' && (
         <GameSelectionScreen
-          onSelectGame={() => setScreen('game')}
+          onSelectGame={(gameIndex: number) => {
+            setSelectedGameIndex(gameIndex);
+            setScreen('game');
+          }}
           onRules={() => setScreen('rules')}
         />
       )}
       {screen === 'rules' && <RulesScreen onBack={() => setScreen('selection')} />}
-      {screen === 'game' && <MemoryGame onBack={() => setScreen('selection')} />}
+      {screen === 'game' && (
+        <MemoryGame 
+          onBack={() => setScreen('selection')}
+          gameConfig={gameConfigs[selectedGameIndex]}
+        />
+      )}
     </View>
   );
 };
