@@ -10,6 +10,7 @@ import appsFlyer from 'react-native-appsflyer';
 import { getApps, initializeApp } from '@react-native-firebase/app';
 import OneSignal from 'react-native-onesignal';
 import { gameConfigs } from './src/gameConfigs';
+import { GlobalLivesProvider } from './src/GlobalLivesContext';
 
 const App: React.FC = () => {
   const [country, setCountry] = useState<string | null>(null);
@@ -89,25 +90,27 @@ const App: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
-      {screen === 'selection' && (
-        <GameSelectionScreen
-          onSelectGame={(gameIndex: number) => {
-            setSelectedGameIndex(gameIndex);
-            setScreen('game');
-          }}
-          onRules={() => setScreen('rules')}
-        />
-      )}
-      {screen === 'rules' && <RulesScreen onBack={() => setScreen('selection')} />}
-      {screen === 'game' && (
-        <MemoryGame 
-          onBack={() => setScreen('selection')}
-          gameConfig={gameConfigs[selectedGameIndex]}
-        />
-      )}
-    </View>
+    <GlobalLivesProvider>
+      <View style={styles.container}>
+        {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
+        {screen === 'selection' && (
+          <GameSelectionScreen
+            onSelectGame={(gameIndex: number) => {
+              setSelectedGameIndex(gameIndex);
+              setScreen('game');
+            }}
+            onRules={() => setScreen('rules')}
+          />
+        )}
+        {screen === 'rules' && <RulesScreen onBack={() => setScreen('selection')} />}
+        {screen === 'game' && (
+          <MemoryGame 
+            onBack={() => setScreen('selection')}
+            gameConfig={gameConfigs[selectedGameIndex]}
+          />
+        )}
+      </View>
+    </GlobalLivesProvider>
   );
 };
 

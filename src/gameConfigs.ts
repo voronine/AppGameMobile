@@ -63,8 +63,8 @@ export const gameConfigs: GameConfig[] = [
     background: require('./assets/game7/bg.png'),
     cardFaces: [
       require('./assets/game7/card1.png'),
+      require('./assets/game7/card2.png'),
       require('./assets/game7/card3.png'),
-      require('./assets/game7/card1.png'),
     ],
     numPairs: 3,
   },

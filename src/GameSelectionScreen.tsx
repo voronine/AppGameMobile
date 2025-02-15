@@ -11,8 +11,8 @@ const gameImages = [
   require('./assets/game2.png'),
   require('./assets/game3.png'),
   require('./assets/game4.png'),
-  require('./assets/game5.png'),
   require('./assets/game6.png'),
+  require('./assets/game5.png'),
   require('./assets/game7.png'),
   require('./assets/game8.png'),
 ];
@@ -71,8 +71,19 @@ const styles = StyleSheet.create({
   },
   infoImage: { width: 24, height: 24 },
   grid: { flex: 1, marginTop: 102, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', padding: 10 },
-  gameSquare: { width: 130, height: 130, margin: 20, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
-  gameImage: { width: '100%', height: '100%' },
+  gameSquare: { 
+    width: 130, 
+    height: 130, 
+    margin: 20, 
+    backgroundColor: '#fff', 
+    justifyContent: 'center', 
+    alignItems: 'center' ,
+    borderRadius: 10, 
+    overflow: 'hidden',
+  },
+  gameImage: { 
+    width: '100%', height: '100%',
+  },
 });
 
 export default GameSelectionScreen;

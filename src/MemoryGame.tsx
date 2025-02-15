@@ -1,13 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ImageBackground, 
-  Image, 
-  Text, 
-  Dimensions 
-} from 'react-native';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { View, TouchableOpacity, StyleSheet, ImageBackground, Image, Text, Modal } from 'react-native';
+import { GlobalLivesContext } from './GlobalLivesContext';
 
 export interface GameConfig {
   background: any;
@@ -45,20 +38,20 @@ const chunkArray = (array: Card[], chunkSize: number): Card[][] => {
 };
 
 const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
+  const { lives, decrementLives } = useContext(GlobalLivesContext);
   const [cards, setCards] = useState<Card[]>([]);
-  const [message, setMessage] = useState<string>('Memorize the cards');
+  const [showLostModal, setShowLostModal] = useState<boolean>(false);
+  const [showWinModal, setShowWinModal] = useState<boolean>(false);
   const openCardsRef = useRef<number[]>([]);
   const inputLockRef = useRef<boolean>(false);
 
   const initGame = () => {
     const newCards = generateCards(gameConfig);
     setCards(newCards);
-    setMessage('Memorize the cards');
     openCardsRef.current = [];
     inputLockRef.current = true;
     setTimeout(() => {
       setCards(prev => prev.map(card => ({ ...card, revealed: false })));
-      setMessage('Choose a card');
       inputLockRef.current = false;
     }, 2000);
   };
@@ -67,46 +60,39 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
     initGame();
   }, [gameConfig]);
 
+  const restartGame = () => {
+    setShowLostModal(false);
+    setShowWinModal(false);
+    initGame();
+  };
+
   const flipCard = (index: number) => {
-    setCards(prev =>
-      prev.map((card, i) => (i === index ? { ...card, revealed: true } : card))
-    );
+    setCards(prev => prev.map((card, i) => (i === index ? { ...card, revealed: true } : card)));
   };
 
   const unflipCards = (indices: number[]) => {
-    setCards(prev =>
-      prev.map((card, i) =>
-        indices.includes(i) ? { ...card, revealed: false } : card
-      )
-    );
+    setCards(prev => prev.map((card, i) => (indices.includes(i) ? { ...card, revealed: false } : card)));
   };
 
   const markMatched = (indices: number[]) => {
-    setCards(prev =>
-      prev.map((card, i) =>
-        indices.includes(i) ? { ...card, matched: true } : card
-      )
-    );
+    setCards(prev => prev.map((card, i) => (indices.includes(i) ? { ...card, matched: true } : card)));
   };
 
   const handleCardPress = async (index: number) => {
     if (inputLockRef.current) return;
     if (cards[index].revealed || cards[index].matched) return;
     if (openCardsRef.current.length >= 2) return;
-
     flipCard(index);
     openCardsRef.current.push(index);
-
     if (openCardsRef.current.length === 2) {
       inputLockRef.current = true;
       await new Promise(res => setTimeout(res, 300));
       const [first, second] = openCardsRef.current;
       if (cards[first].value === cards[second].value) {
         markMatched([first, second]);
-        setMessage('Match found!');
         await new Promise(res => setTimeout(res, 500));
       } else {
-        setMessage('No match, try again');
+        decrementLives();
         await new Promise(res => setTimeout(res, 700));
         unflipCards([first, second]);
       }
@@ -116,23 +102,37 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
   };
 
   useEffect(() => {
+    if (lives <= 0) {
+      setShowLostModal(true);
+      inputLockRef.current = true;
+    }
+  }, [lives]);
+
+  useEffect(() => {
     if (cards.length && cards.every(card => card.matched)) {
-      setMessage('You completed the game!');
+      setShowWinModal(true);
+      inputLockRef.current = true;
     }
   }, [cards]);
+
+  const renderHeader = () => (
+    <ImageBackground source={require('./assets/Rectangle.png')} style={styles.header} resizeMode="cover">
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <Image source={require('./assets/back.png')} style={styles.backButtonImage} resizeMode="contain" />
+      </TouchableOpacity>
+      <Image source={require('./assets/heart.png')} />
+      <View style={styles.livesIndicator}>
+        <Text style={styles.livesText}>{lives}/{DEFAULT_LIVES}</Text>
+      </View>
+    </ImageBackground>
+  );
 
   if (gameConfig.numPairs === 6) {
     const rows = chunkArray(cards, 3);
     return (
       <ImageBackground source={gameConfig.background} style={styles.background} resizeMode="cover">
         <View style={styles.container}>
-          <ImageBackground source={require('./assets/Rectangle.png')} style={styles.header} resizeMode="cover">
-            <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <Image source={require('./assets/back.png')} style={styles.backButtonImage} resizeMode="contain" />
-            </TouchableOpacity>
-            <Image source={require('./assets/Logo.png')} style={styles.icon} />
-          </ImageBackground>
-          <Text style={styles.message}>{message}</Text>
+          {renderHeader()}
           <View style={styles.rowsContainer}>
             {rows.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
@@ -152,19 +152,33 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
             ))}
           </View>
         </View>
+        <Modal visible={showLostModal} transparent animationType="fade">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>Вы проиграли</Text>
+              <TouchableOpacity onPress={restartGame}>
+                <Text style={styles.modalButtonText}>Попробовать снова</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <Modal visible={showWinModal} transparent animationType="fade">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>Вы выиграли!</Text>
+              <TouchableOpacity onPress={restartGame}>
+                <Text style={styles.modalButtonText}>Сыграть ещё раз</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ImageBackground>
     );
   } else {
     return (
       <ImageBackground source={gameConfig.background} style={styles.background} resizeMode="cover">
         <View style={styles.container}>
-          <ImageBackground source={require('./assets/Rectangle.png')} style={styles.header} resizeMode="cover">
-            <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <Image source={require('./assets/back.png')} style={styles.backButtonImage} resizeMode="contain" />
-            </TouchableOpacity>
-            <Image source={require('./assets/Logo.png')} style={styles.icon} />
-          </ImageBackground>
-          <Text style={styles.message}>{message}</Text>
+          {renderHeader()}
           <View style={styles.grid}>
             {cards.map((card, index) => (
               <TouchableOpacity key={index} style={styles.cardDefault} onPress={() => handleCardPress(index)}>
@@ -177,10 +191,32 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
             ))}
           </View>
         </View>
+        <Modal visible={showLostModal} transparent animationType="fade">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>Вы проиграли</Text>
+              <TouchableOpacity onPress={restartGame}>
+                <Text style={styles.modalButtonText}>Попробовать снова</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <Modal visible={showWinModal} transparent animationType="fade">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>Вы выиграли!</Text>
+              <TouchableOpacity onPress={restartGame}>
+                <Text style={styles.modalButtonText}>Сыграть ещё раз</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ImageBackground>
     );
   }
 };
+
+const DEFAULT_LIVES = 8;
 
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
@@ -190,57 +226,22 @@ const styles = StyleSheet.create({
     height: 102,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
-  icon: { width: 62, height: 39 },
-  backButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 20,
-    backgroundColor: '#541896',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    left: 20,
-  },
+  backButton: { position: 'absolute', left: 20 },
   backButtonImage: { width: 20, height: 20 },
-  message: {
-    fontSize: 16,
-    margin: 10,
-    textAlign: 'center',
-    color: '#fff',
-  },
-  rowsContainer: {
-    alignSelf: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-  card12: {
-    width: 100,
-    height: 100,
-    marginHorizontal: 7.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
-  },
+  livesIndicator: { position: 'absolute', right: 20, top: 30 },
+  livesText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  rowsContainer: { alignSelf: 'center', paddingTop: 15 },
+  row: { flexDirection: 'row', justifyContent: 'center', marginBottom: 15 },
+  card12: { width: 100, height: 100, marginHorizontal: 7.5, justifyContent: 'center', alignItems: 'center', borderRadius: 10, backgroundColor: '#2E2B42', borderWidth: 3, borderColor: '#6EBCF7', overflow: 'hidden' },
   cardImage: { width: '100%', height: '100%' },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  cardDefault: {
-    width: 150,
-    height: 150,
-    marginVertical: 15,
-    marginHorizontal: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
-  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  cardDefault: { width: 150, height: 150, marginVertical: 15, marginHorizontal: 8, justifyContent: 'center', alignItems: 'center', borderRadius: 10, backgroundColor: '#2E2B42', borderWidth: 3, borderColor: '#6EBCF7', overflow: 'hidden' },
+  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 10, alignItems: 'center' },
+  modalText: { fontSize: 20, marginBottom: 10 },
+  modalButtonText: { fontSize: 16, color: '#007AFF' },
 });
 
 export default MemoryGame;
