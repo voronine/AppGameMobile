@@ -91,9 +91,9 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 20,
-    marginBottom: 10,
     color: '#fff',
     textTransform: 'uppercase',
+    fontFamily: 'Baloo2-Regular'
   },
   squareContainer: {
     width: 160,

@@ -64,12 +64,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 22,
     color: '#fff',
-    paddingBottom: 20
+    paddingBottom: 20,
+    fontFamily: 'Baloo2-Regular'
   },
   rulesText: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#fff'
+    color: '#fff',
+    fontFamily: 'Baloo2-Regular'
   },
   background: { flex: 1, width: '100%', height: '100%' },
   backButton: {

@@ -80,7 +80,7 @@ const App: React.FC = () => {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#333" />
-        <Text>Loading...</Text>
+        <Text style={{fontFamily: 'Baloo2-Regular' }}>Loading...</Text>
       </View>
     );
   }

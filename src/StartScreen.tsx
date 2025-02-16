@@ -37,7 +37,8 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     color: '#FFFFFF',
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
+    fontFamily: 'Baloo2-Regular'
   }
 });
 
