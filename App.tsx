@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, Alert, StyleSheet, SafeAreaView } from 'react-native';
+import { SafeAreaView, View, Text, ActivityIndicator, Alert, StyleSheet, StatusBar } from 'react-native';
 import { WebView } from 'react-native-webview';
 import MemoryGame from './src/MemoryGame';
 import StartScreen from './src/StartScreen';
@@ -38,17 +38,15 @@ const App: React.FC = () => {
       if (!getApps().length) {
         initializeApp(firebaseConfig);
       }
-      console.log("Firebase initialized");
       appsFlyer.initSdk(
         {
           devKey: 'FAKE_APPSFLYER_KEY',
           isDebug: true,
           onInstallConversionDataListener: true
         },
-        (result: any) => { console.log("Appsflyer initialized:", result); },
-        (error: any) => { console.error("Appsflyer initialization error:", error); }
+        (result: any) => {},
+        (error: any) => {}
       );
-      console.log("OneSignal initialized");
     } catch (error) {
       console.error("SDK initialization error:", error);
     }
@@ -78,9 +76,9 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#333" />
-        <Text style={{fontFamily: 'Baloo2-Regular' }}>Loading...</Text>
+        <Text style={{ fontFamily: 'Baloo2-Regular' }}>Loading...</Text>
       </View>
     );
   }
@@ -91,39 +89,51 @@ const App: React.FC = () => {
 
   return (
     <GlobalLivesProvider>
-      <SafeAreaView style={styles.safeArea} />
-      <View style={styles.container}>
-        {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
-        {screen === 'selection' && (
-          <GameSelectionScreen
-            onSelectGame={(gameIndex: number) => {
-              setSelectedGameIndex(gameIndex);
-              setScreen('game');
-            }}
-            onRules={() => setScreen('rules')}
-          />
-        )}
-        {screen === 'rules' && <RulesScreen onBack={() => setScreen('selection')} />}
-        {screen === 'game' && (
-          <MemoryGame 
-            onBack={() => setScreen('selection')}
-            gameConfig={gameConfigs[selectedGameIndex]}
-            onNextLevel={() => {
-              const nextIndex = selectedGameIndex < gameConfigs.length - 1 ? selectedGameIndex + 1 : 0;
-              setSelectedGameIndex(nextIndex);
-              setScreen('game');
-            }}
-          />
-        )}
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor="#541896" barStyle="light-content" />
+        <View style={styles.container}>
+          {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
+          {screen === 'selection' && (
+            <GameSelectionScreen
+              onSelectGame={(gameIndex: number) => {
+                setSelectedGameIndex(gameIndex);
+                setScreen('game');
+              }}
+              onRules={() => setScreen('rules')}
+            />
+          )}
+          {screen === 'rules' && <RulesScreen onBack={() => setScreen('selection')} />}
+          {screen === 'game' && (
+            <MemoryGame
+              onBack={() => setScreen('selection')}
+              gameConfig={gameConfigs[selectedGameIndex]}
+              onNextLevel={() => {
+                const nextIndex = selectedGameIndex < gameConfigs.length - 1 ? selectedGameIndex + 1 : 0;
+                setSelectedGameIndex(nextIndex);
+                setScreen('game');
+              }}
+            />
+          )}
+        </View>
+      </SafeAreaView>
     </GlobalLivesProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 0, backgroundColor: '#541896' },
-  container: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' }
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#541896'
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff'
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
 });
 
 export default App;
