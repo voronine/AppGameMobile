@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const LIFE_STORAGE_KEY = 'globalLives';
 const LIFE_TIMESTAMP_KEY = 'livesTimestamp';
 const DEFAULT_LIVES = 8;
-const ONE_HOUR = 3600000;
+const ONE_HOUR = 30;
 
 interface GlobalLivesContextProps {
   lives: number;
@@ -49,6 +49,7 @@ export const GlobalLivesProvider: React.FC<GlobalLivesProviderProps> = ({ childr
 
   const decrementLives = () => {
     setLivesState(prev => {
+      if (prev <= 0) return 0;
       const newLives = prev - 1;
       AsyncStorage.setItem(LIFE_STORAGE_KEY, newLives.toString());
       return newLives;

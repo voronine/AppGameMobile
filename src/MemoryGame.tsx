@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { View, TouchableOpacity, StyleSheet, ImageBackground, Image, Text, Modal } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ImageBackground, Image, Text } from 'react-native';
 import { GlobalLivesContext } from './GlobalLivesContext';
+import GameModal from './GameModal';
 
 export interface GameConfig {
   background: any;
@@ -18,6 +19,7 @@ interface Card {
 interface MemoryGameProps {
   onBack: () => void;
   gameConfig: GameConfig;
+  onNextLevel?: () => void;
 }
 
 const generateCards = (config: GameConfig): Card[] => {
@@ -37,7 +39,9 @@ const chunkArray = (array: Card[], chunkSize: number): Card[][] => {
   return chunks;
 };
 
-const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
+const DEFAULT_LIVES = 8;
+
+const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig, onNextLevel }) => {
   const { lives, decrementLives } = useContext(GlobalLivesContext);
   const [cards, setCards] = useState<Card[]>([]);
   const [showLostModal, setShowLostModal] = useState<boolean>(false);
@@ -66,6 +70,15 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
     initGame();
   };
 
+  const handleNextLevel = () => {
+    setShowWinModal(false); 
+    if (onNextLevel) {
+      onNextLevel();
+    } else {
+      restartGame();
+    }
+  };
+
   const flipCard = (index: number) => {
     setCards(prev => prev.map((card, i) => (i === index ? { ...card, revealed: true } : card)));
   };
@@ -79,6 +92,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
   };
 
   const handleCardPress = async (index: number) => {
+    if (lives <= 0) return;
     if (inputLockRef.current) return;
     if (cards[index].revealed || cards[index].matched) return;
     if (openCardsRef.current.length >= 2) return;
@@ -92,9 +106,15 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
         markMatched([first, second]);
         await new Promise(res => setTimeout(res, 500));
       } else {
+        const newLives = lives - 1;
         decrementLives();
         await new Promise(res => setTimeout(res, 700));
-        unflipCards([first, second]);
+        if (newLives < 1) {
+          setShowLostModal(true);
+          inputLockRef.current = true;
+        } else {
+          unflipCards([first, second]);
+        }
       }
       openCardsRef.current = [];
       inputLockRef.current = false;
@@ -102,14 +122,14 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
   };
 
   useEffect(() => {
-    if (lives <= 0) {
+    if (lives < 1) {
       setShowLostModal(true);
       inputLockRef.current = true;
     }
   }, [lives]);
 
   useEffect(() => {
-    if (cards.length && cards.every(card => card.matched)) {
+    if (cards.length > 0 && cards.every(card => card.matched)) {
       setShowWinModal(true);
       inputLockRef.current = true;
     }
@@ -152,26 +172,18 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
             ))}
           </View>
         </View>
-        <Modal visible={showLostModal} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalText}>Вы проиграли</Text>
-              <TouchableOpacity onPress={restartGame}>
-                <Text style={styles.modalButtonText}>Попробовать снова</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-        <Modal visible={showWinModal} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalText}>Вы выиграли!</Text>
-              <TouchableOpacity onPress={restartGame}>
-                <Text style={styles.modalButtonText}>Сыграть ещё раз</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        <GameModal 
+          visible={showLostModal} 
+          message="You lost!" 
+          onHomePress={onBack} 
+          onSecondaryPress={restartGame} 
+        />
+        <GameModal 
+          visible={showWinModal} 
+          message="You won!" 
+          onHomePress={onBack} 
+          onSecondaryPress={handleNextLevel} 
+        />
       </ImageBackground>
     );
   } else {
@@ -191,45 +203,29 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig }) => {
             ))}
           </View>
         </View>
-        <Modal visible={showLostModal} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalText}>Вы проиграли</Text>
-              <TouchableOpacity onPress={restartGame}>
-                <Text style={styles.modalButtonText}>Попробовать снова</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-        <Modal visible={showWinModal} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalText}>Вы выиграли!</Text>
-              <TouchableOpacity onPress={restartGame}>
-                <Text style={styles.modalButtonText}>Сыграть ещё раз</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        <GameModal 
+          visible={showLostModal} 
+          message="You lost!" 
+          onHomePress={onBack} 
+          onSecondaryPress={restartGame} 
+        />
+        <GameModal 
+          visible={showWinModal} 
+          message="You won!" 
+          onHomePress={onBack} 
+          onSecondaryPress={handleNextLevel} 
+        />
       </ImageBackground>
     );
   }
 };
 
-const DEFAULT_LIVES = 8;
-
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    width: '100%',
-    height: 102,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  backButton: { position: 'absolute', left: 20 },
-  backButtonImage: { width: 20, height: 20 },
+  header: { width: '100%', height: 102, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  backButton: { position: 'absolute', left: 20, width: 28, height: 28 },
+  backButtonImage: { width: 28, height: 28 },
   livesIndicator: { position: 'absolute', right: 20, top: 30 },
   livesText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
   rowsContainer: { alignSelf: 'center', paddingTop: 15 },
@@ -237,11 +233,7 @@ const styles = StyleSheet.create({
   card12: { width: 100, height: 100, marginHorizontal: 7.5, justifyContent: 'center', alignItems: 'center', borderRadius: 10, backgroundColor: '#2E2B42', borderWidth: 3, borderColor: '#6EBCF7', overflow: 'hidden' },
   cardImage: { width: '100%', height: '100%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  cardDefault: { width: 150, height: 150, marginVertical: 15, marginHorizontal: 8, justifyContent: 'center', alignItems: 'center', borderRadius: 10, backgroundColor: '#2E2B42', borderWidth: 3, borderColor: '#6EBCF7', overflow: 'hidden' },
-  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 10, alignItems: 'center' },
-  modalText: { fontSize: 20, marginBottom: 10 },
-  modalButtonText: { fontSize: 16, color: '#007AFF' },
+  cardDefault: { width: 150, height: 150, marginVertical: 15, marginHorizontal: 8, justifyContent: 'center', alignItems: 'center', borderRadius: 10, backgroundColor: '#2E2B42', borderWidth: 3, borderColor: '#6EBCF7', overflow: 'hidden' }
 });
 
 export default MemoryGame;

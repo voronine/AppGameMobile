@@ -107,6 +107,11 @@ const App: React.FC = () => {
           <MemoryGame 
             onBack={() => setScreen('selection')}
             gameConfig={gameConfigs[selectedGameIndex]}
+            onNextLevel={() => {
+              const nextIndex = selectedGameIndex < gameConfigs.length - 1 ? selectedGameIndex + 1 : 0;
+              setSelectedGameIndex(nextIndex);
+              setScreen('game');
+            }}
           />
         )}
       </View>
