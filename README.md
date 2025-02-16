@@ -1,4 +1,4 @@
-![Screenshot_4](./assets/Screenshot_4.png)
+![Screenshot_4](https://github.com/voronine/AppGameMobile/blob/main/src/assets/Screenshot_4.png)
 
 This project is a mobile application developed using React Native CLI. It incorporates the following key functional elements:
 
