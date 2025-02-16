@@ -53,15 +53,14 @@ const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
   headerContainer: { position: 'absolute', top: 0, left: 0, right: 0, height: 102 },
   header: {
-    flex: 1,
+    width: '100%',
+    height: 62,
+    backgroundColor: '#541896',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 10,
   },
   infoButton: {
-    width: 28,
-    height: 28,
     borderRadius: 20,
     backgroundColor: '#541896',
     justifyContent: 'center',

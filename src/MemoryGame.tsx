@@ -140,7 +140,9 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig, onNextLevel
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
         <Image source={require('./assets/back.png')} style={styles.backButtonImage} resizeMode="contain" />
       </TouchableOpacity>
+
       <Image source={require('./assets/heart.png')} />
+
       <View style={styles.livesIndicator}>
         <Text style={styles.livesText}>{lives}/{DEFAULT_LIVES}</Text>
       </View>
@@ -172,18 +174,21 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig, onNextLevel
             ))}
           </View>
         </View>
+
         <GameModal 
           visible={showLostModal} 
           message="You lost!" 
           onHomePress={onBack} 
           onSecondaryPress={restartGame} 
         />
+
         <GameModal 
           visible={showWinModal} 
           message="You won!" 
           onHomePress={onBack} 
           onSecondaryPress={handleNextLevel} 
         />
+
       </ImageBackground>
     );
   } else {
@@ -223,13 +228,13 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onBack, gameConfig, onNextLevel
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: { width: '100%', height: 102, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  header: { width: '100%', height: 62, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   backButton: { position: 'absolute', left: 20, width: 28, height: 28 },
   backButtonImage: { width: 28, height: 28 },
   livesIndicator: { 
     position: 'absolute', 
     right: 20, 
-    top: 30,
+    top: 20,
     backgroundColor: '#00FFB2',
     borderRadius: 50,
     width: 45,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, StyleSheet, SafeAreaView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import MemoryGame from './src/MemoryGame';
 import StartScreen from './src/StartScreen';
@@ -91,6 +91,7 @@ const App: React.FC = () => {
 
   return (
     <GlobalLivesProvider>
+      <SafeAreaView style={styles.safeArea} />
       <View style={styles.container}>
         {screen === 'start' && <StartScreen onStart={() => setScreen('selection')} />}
         {screen === 'selection' && (
@@ -120,7 +121,9 @@ const App: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' }
+  safeArea: { flex: 0, backgroundColor: '#541896' },
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' }
 });
 
 export default App;
