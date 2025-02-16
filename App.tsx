@@ -8,7 +8,6 @@ import RulesScreen from './src/RulesScreen';
 import * as RNLocalize from 'react-native-localize';
 import appsFlyer from 'react-native-appsflyer';
 import { getApps, initializeApp } from '@react-native-firebase/app';
-import OneSignal from 'react-native-onesignal';
 import { gameConfigs } from './src/gameConfigs';
 import { GlobalLivesProvider } from './src/GlobalLivesContext';
 
@@ -55,8 +54,15 @@ const App: React.FC = () => {
   const determineUserCountry = (): void => {
     try {
       const locales = RNLocalize.getLocales();
+      console.log('Locales:', locales);
+      if (locales.length >= 18) {
+        console.log('18th locale:', locales[17]);
+      } else {
+        console.log('Less than 18 locales available');
+      }
       if (locales.length > 0) {
         const countryCode = locales[0].countryCode;
+        console.log('Country code (first locale):', countryCode);
         if (countryCode) {
           setCountry(countryCode);
         } else {
